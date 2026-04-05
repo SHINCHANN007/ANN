@@ -1,0 +1,181 @@
+```python
+from random import random, seed
+from math import exp
+
+# =========================================================
+# 1. SIMPLE PERCEPTRON (AND / OR)
+# =========================================================
+
+def predict_perceptron(row, weights):
+    activation = weights[0]  # bias
+    for i in range(len(row)-1):
+        activation += weights[i+1] * row[i]
+    return 1 if activation >= 0 else 0
+
+def train_perceptron(dataset, lr, epochs):
+    weights = [0.0 for _ in range(len(dataset[0]))]
+
+    for epoch in range(epochs):
+        error_sum = 0
+        for row in dataset:
+            pred = predict_perceptron(row, weights)
+            error = row[-1] - pred
+            error_sum += error**2
+
+            weights[0] += lr * error  # bias
+            for i in range(len(row)-1):
+                weights[i+1] += lr * error * row[i]
+
+        print(f"Epoch {epoch}, Error {error_sum}")
+
+    return weights
+
+
+# =========================================================
+# 2. MLP (FOR XOR)
+# =========================================================
+
+def initialize_network(n_inputs, n_hidden, n_outputs):
+    network = []
+
+    hidden = [{'weights':[random() for _ in range(n_inputs+1)]} for _ in range(n_hidden)]
+    network.append(hidden)
+
+    output = [{'weights':[random() for _ in range(n_hidden+1)]} for _ in range(n_outputs)]
+    network.append(output)
+
+    return network
+
+
+def activate(weights, inputs):
+    activation = weights[-1]
+    for i in range(len(weights)-1):
+        activation += weights[i] * inputs[i]
+    return activation
+
+
+def sigmoid(x):
+    return 1/(1+exp(-x))
+
+
+def forward(network, row):
+    inputs = row
+    for layer in network:
+        new_inputs = []
+        for neuron in layer:
+            a = activate(neuron['weights'], inputs)
+            neuron['output'] = sigmoid(a)
+            new_inputs.append(neuron['output'])
+        inputs = new_inputs
+    return inputs
+
+
+def sigmoid_derivative(output):
+    return output * (1 - output)
+
+
+def backward(network, expected):
+    for i in reversed(range(len(network))):
+        layer = network[i]
+
+        if i == len(network)-1:
+            for j, neuron in enumerate(layer):
+                error = expected[j] - neuron['output']
+                neuron['delta'] = error * sigmoid_derivative(neuron['output'])
+        else:
+            for j, neuron in enumerate(layer):
+                error = 0
+                for next_neuron in network[i+1]:
+                    error += next_neuron['weights'][j] * next_neuron['delta']
+                neuron['delta'] = error * sigmoid_derivative(neuron['output'])
+
+
+def update(network, row, lr):
+    for i, layer in enumerate(network):
+
+        if i == 0:
+            inputs = row[:-1]
+        else:
+            inputs = [n['output'] for n in network[i-1]]
+
+        for neuron in layer:
+            for j in range(len(inputs)):
+                neuron['weights'][j] += lr * neuron['delta'] * inputs[j]
+            neuron['weights'][-1] += lr * neuron['delta']
+
+
+def train_mlp(network, dataset, lr, epochs, n_outputs):
+    for epoch in range(epochs):
+        error_sum = 0
+
+        for row in dataset:
+            outputs = forward(network, row[:-1])
+
+            expected = [0]*n_outputs
+            expected[row[-1]] = 1
+
+            error_sum += sum((expected[i] - outputs[i])**2 for i in range(n_outputs))
+
+            backward(network, expected)
+            update(network, row, lr)
+
+        print(f"Epoch {epoch}, Error {error_sum}")
+
+
+def predict_mlp(network, row):
+    outputs = forward(network, row)
+    return outputs.index(max(outputs))
+
+
+# =========================================================
+# 3. DATASETS
+# =========================================================
+
+AND = [
+    [0,0,0],
+    [0,1,0],
+    [1,0,0],
+    [1,1,1]
+]
+
+OR = [
+    [0,0,0],
+    [0,1,1],
+    [1,0,1],
+    [1,1,1]
+]
+
+XOR = [
+    [0,0,0],
+    [0,1,1],
+    [1,0,1],
+    [1,1,0]
+]
+
+
+# =========================================================
+# 4. RUN
+# =========================================================
+
+seed(1)
+
+print("\n--- AND (Perceptron) ---")
+w = train_perceptron(AND, 0.1, 5)
+print("Weights:", w)
+
+print("\n--- OR (Perceptron) ---")
+w = train_perceptron(OR, 0.1, 5)
+print("Weights:", w)
+
+print("\n--- XOR (MLP) ---")
+n_inputs = 2
+n_hidden = 2
+n_outputs = 2
+
+net = initialize_network(n_inputs, n_hidden, n_outputs)
+train_mlp(net, XOR, 0.5, 20, n_outputs)
+
+print("\nPredictions:")
+for row in XOR:
+    print(row[:-1], "->", predict_mlp(net, row[:-1]))
+```
