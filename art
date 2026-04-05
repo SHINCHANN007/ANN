@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from PIL import Image
+
+
+def image_to_vector(path, size=(32, 32), threshold=128):
+
+    img = Image.open(path).convert("L")
+    img = img.resize(size)
+
+    img_arr = np.array(img)
+
+    # convert to binary
+    binary = (img_arr > threshold).astype(int)
+
+    return binary.flatten(), binary
+
+
+# ---------------- TRAINING IMAGES ----------------
+train_paths = [
+    "C:/Users/anura/Desktop/D/img1.jpeg",
+    "C:/Users/anura/Desktop/D/img2.jpg",
+    "C:/Users/anura/Desktop/D/img3.jpg",
+    "C:/Users/anura/Desktop/D/img4.jpg"
+]
+
+train_vectors = []
+train_images = []
+
+for path in train_paths:
+    vec, img = image_to_vector(path)
+    train_vectors.append(vec)
+    train_images.append(img)
+
+train_vectors = np.array(train_vectors)
+
+
+# ---------------- MODEL (KMeans instead of ART1) ----------------
+n_clusters = 2   # adjust if needed
+model = KMeans(n_clusters=n_clusters, random_state=0)
+
+model.fit(train_vectors)
+
+labels = model.predict(train_vectors)
+num_categories = len(np.unique(labels))
+
+print("Number of learned categories:", num_categories)
+
+
+# ---------------- TEST IMAGE ----------------
+test_path = "C:/Users/anura/Desktop/D/img1.jpeg"   # <-- change if you want another image
+
+test_vector, test_img = image_to_vector(test_path)
+test_vector = np.array(test_vector).reshape(1, -1)
+
+prediction = model.predict(test_vector)
+
+print("Recognized as Category:", prediction[0] + 1)
+
+
+# ---------------- VISUALIZATION ----------------
+plt.figure(figsize=(10, 4))
+
+# Training images
+for i, img in enumerate(train_images):
+    plt.subplot(2, len(train_images) + 1, i + 1)
+    plt.imshow(img, cmap="gray")
+    plt.title(f"Train {i+1}\nC{labels[i]+1}")
+    plt.axis("off")
+
+# Test image
+plt.subplot(2, len(train_images) + 1, len(train_images) + 1)
+plt.imshow(test_img, cmap="gray")
+plt.title(f"Test\nC{prediction[0]+1}")
+plt.axis("off")
+
+plt.suptitle("Image Recognition using KMeans (ART-1 Alternative)")
+plt.show()
