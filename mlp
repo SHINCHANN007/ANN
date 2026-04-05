@@ -1,0 +1,143 @@
+
+from random import random, seed
+from math import exp
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+
+# =========================================================
+# 1. NETWORK INITIALIZATION
+# =========================================================
+def network(n_inputs, n_hidden, n_outputs):
+    net = []
+
+    hidden = [{'weights': [random() for _ in range(n_inputs + 1)]}
+              for _ in range(n_hidden)]
+    net.append(hidden)
+
+    output = [{'weights': [random() for _ in range(n_hidden + 1)]}
+              for _ in range(n_outputs)]
+    net.append(output)
+
+    return net
+
+
+# =========================================================
+# 2. FORWARD PASS
+# =========================================================
+def activation(weights, inputs):
+    s = weights[-1]   # bias
+    for i in range(len(weights) - 1):
+        s += weights[i] * inputs[i]
+    return s
+
+
+def sigmoid(x):
+    return 1 / (1 + exp(-x))
+
+
+def forward(inputs, net):
+    for layer in net:
+        new_inputs = []
+        for neuron in layer:
+            a = activation(neuron['weights'], inputs)
+            neuron['output'] = sigmoid(a)
+            new_inputs.append(neuron['output'])
+        inputs = new_inputs
+    return inputs
+
+
+# =========================================================
+# 3. BACKWARD PASS
+# =========================================================
+def gradient(o):
+    return o * (1 - o)
+
+
+def backward(expected, net):
+    for i in reversed(range(len(net))):
+        layer = net[i]
+
+        if i == len(net) - 1:
+            for j, neuron in enumerate(layer):
+                error = neuron['output'] - expected[j]
+                neuron['delta'] = error * gradient(neuron['output'])
+
+        else:
+            for j, neuron in enumerate(layer):
+                error = 0.0
+                for nextn in net[i + 1]:
+                    error += nextn['weights'][j] * nextn['delta']
+                neuron['delta'] = error * gradient(neuron['output'])
+
+
+# =========================================================
+# 4. UPDATE WEIGHTS
+# =========================================================
+def update(net, inputs, lr):
+    for i, layer in enumerate(net):
+
+        if i == 0:
+            layer_inputs = inputs
+        else:
+            layer_inputs = [n['output'] for n in net[i - 1]]
+
+        for neuron in layer:
+            for j in range(len(layer_inputs)):
+                neuron['weights'][j] -= lr * neuron['delta'] * layer_inputs[j]
+            neuron['weights'][-1] -= lr * neuron['delta']
+
+
+# =========================================================
+# 5. TRAIN
+# =========================================================
+def train(net, data, lr, epoch, n_outputs):
+    for ep in range(epoch):
+        total_error = 0
+
+        for row in data:
+            inputs = row[:-1]
+            label = row[-1]
+
+            outputs = forward(inputs, net)
+
+            expected = [0 for _ in range(n_outputs)]
+            expected[label] = 1
+
+            total_error += sum((expected[i] - outputs[i])**2 for i in range(n_outputs))
+
+            backward(expected, net)
+            update(net, inputs, lr)
+
+        print(f"Epoch {ep} | Error {total_error:.3f}")
+
+
+# =========================================================
+# 6. DATA (IRIS)
+# =========================================================
+seed(1)
+
+iris = sns.load_dataset("iris")
+
+encoder = LabelEncoder()
+iris['species'] = encoder.fit_transform(iris['species'])
+
+X = iris.drop('species', axis=1).values
+y = iris['species'].values
+
+data = [list(X[i]) + [y[i]] for i in range(len(X))]
+
+
+# =========================================================
+# 7. RUN
+# =========================================================
+n_inputs = 4
+n_hidden = 2
+n_outputs = 3
+
+net = network(n_inputs, n_hidden, n_outputs)
+
+train(net, data, lr=0.2, epoch=20, n_outputs=n_outputs)
+
+print("\nFinal Weights:")
+for layer in net:
+    print(layer)
