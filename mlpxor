@@ -1,0 +1,163 @@
+
+from random import random,seed
+import math
+
+
+def network(inputs,hiddenlayer,output):
+
+    network=list()
+    prev_neuron = inputs
+    for neuron_size in hiddenlayer:
+        layer = [   {'weights':[random() for i in range(prev_neuron +1)]}  for i in range(neuron_size) ]
+        network.append(layer)
+        prev_neuron = neuron_size
+    outlayer = [   {'weights':[random() for i in range(prev_neuron +1)]}  for i in range(output) ]
+    network.append(outlayer)
+
+    return network
+
+def sigmoid(activation):
+    return 1.0/(1.0+math.exp(-activation))
+
+def gradient(output):
+    return output *(1-output)
+
+def activation(row,weights):
+    activate = weights[-1]
+    for i in range(len(weights)-1):
+        activate+= weights[i] * row[i]
+    return activate
+
+def forward(row,network):
+
+    inputs = row
+
+    for layer in network:
+        newinputs =[]
+        for neuron in layer:
+            activate = activation(inputs,neuron['weights'])
+            neuron['output'] = sigmoid(activate)
+            newinputs.append(neuron['output'])
+        inputs = newinputs
+    return inputs
+
+def out(layer,expected):
+    for i,neuron in enumerate(layer):
+        error = expected[i]- neuron['output']
+        neuron['delta'] = error * gradient(neuron['output'])
+
+def hid(nextlayer,layer):
+
+    for i,neuron in enumerate(layer):
+        error = 0.0
+        for j,nextn in enumerate(nextlayer):
+            error+= nextn['weights'][i] * nextn['delta']
+        neuron['delta'] = error * gradient(neuron['output'])
+
+    
+def backward(expected,network):
+
+    for i in reversed(range(len(network))):
+        layer = network[i]
+
+        if i == len(network)-1:
+            out(layer,expected)
+        else:
+            hid(network[i+1],layer)
+
+def updatee(network,row,lr):
+
+    for i,layer in enumerate(network):
+
+        if i ==0:
+            inputs = row
+        else:
+            inputs = [neuron['output'] for neuron in network[i-1]]
+
+        for neuron in layer:
+            for j,inp in enumerate(inputs):
+                neuron['weights'][j]+= neuron['delta']*lr*inp
+            neuron['weights'][-1]+= neuron['delta']*lr
+
+def loss(expected,output):
+    sq_err = 0
+
+    for i in range(len(output)):
+        error = expected[i] - output[i]
+        sq_err += error**2
+    return sq_err/len(output)
+
+
+
+
+def train(epoch,lr,traindata,network):
+    for ep in range(epoch):
+        for row in traindata:
+            inputs = row[:-1]
+            expected = [row[-1]]
+
+            result = forward(inputs,network)
+            error = loss(expected,result)
+            backward(expected,network)
+            updatee(network,inputs,lr)
+            if ep % 50 == 0:
+                print(f"\n\ninputs : {inputs} \n output : {result}")
+        
+        if ep % 50 == 0:
+            print("-----------------------------")
+            print(f"Epoch {ep}\n")
+
+            for i ,layer in enumerate(network):
+                if i == len(network)-1:
+                    print("Output Layer : \n")
+                for j,neuron in enumerate(layer):
+                    print(f"Neuron {j} : weights - {neuron['weights']} -->Output - {neuron['output']} \n\n")
+                    print(f"Sum error : {error}")
+            print("-----------------------------")
+    
+                
+    
+seed(1)
+data = [[0,0,0],[1,1,0],[1,0,1],[0,1,1]]
+network = network(2,[4],1)
+lr =0.2
+epoch = 2000
+
+train(epoch,lr,data,network)
+
+def predict(row,network):
+
+    out = forward(row,network)
+    if out[0] >=0.5:
+        return 1
+    else:
+        return 0
+    
+
+for row in data:
+    inp = row[:-1]
+    out = [row[-1]]
+
+    pred = predict(inp,network)
+
+    print(f"predicted : {pred} | expected : {out}")
+
+def predict2(row,network):
+
+    out = forward(row,network)
+    print(out)
+
+for row in data:
+    inp = row[:-1]
+    out = [row[-1]]
+
+    predict2(inp,network)
+
+
+
+    
+
+
+    
+    
+   
