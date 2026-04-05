@@ -1,0 +1,143 @@
+```python
+from random import random, seed, shuffle
+import math
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.datasets import load_digits
+
+# -----------------------------
+# LOAD DATA (DIGITS)
+# -----------------------------
+data = load_digits()
+
+X = data.data / 16.0   # normalize (pixels are 0–16)
+y = data.target
+
+# reduce size (optional but keeps speed similar)
+X = X[:1500]
+y = y[:1500]
+
+# split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -----------------------------
+# SIMPLE PCA
+# -----------------------------
+pca = PCA(n_components=30)   # from 64 → 30
+
+X_train = pca.fit_transform(X_train)
+X_test = pca.transform(X_test)
+
+# -----------------------------
+# YOUR MLP (UNCHANGED)
+# -----------------------------
+def network(inputs, hiddenlayer, output):
+    net = []
+    prev = inputs
+
+    for size in hiddenlayer:
+        layer = [{'weights':[random() for _ in range(prev+1)]} for _ in range(size)]
+        net.append(layer)
+        prev = size
+
+    out = [{'weights':[random() for _ in range(prev+1)]} for _ in range(output)]
+    net.append(out)
+
+    return net
+
+def sigmoid(x):
+    return 1/(1+math.exp(-x))
+
+def gradient(o):
+    return o*(1-o)
+
+def activation(row, weights):
+    s = weights[-1]
+    for i in range(len(weights)-1):
+        s += weights[i]*row[i]
+    return s
+
+def forward(row, net):
+    inputs = row
+    for layer in net:
+        new = []
+        for neuron in layer:
+            a = activation(inputs, neuron['weights'])
+            neuron['output'] = sigmoid(a)
+            new.append(neuron['output'])
+        inputs = new
+    return inputs
+
+def backward(expected, net):
+    for i in reversed(range(len(net))):
+        layer = net[i]
+
+        if i == len(net)-1:
+            for j, neuron in enumerate(layer):
+                error = expected[j] - neuron['output']
+                neuron['delta'] = error * gradient(neuron['output'])
+        else:
+            for j, neuron in enumerate(layer):
+                error = 0.0
+                for nextn in net[i+1]:
+                    error += nextn['weights'][j] * nextn['delta']
+                neuron['delta'] = error * gradient(neuron['output'])
+
+def update(net, row, lr):
+    for i, layer in enumerate(net):
+
+        if i == 0:
+            inputs = row
+        else:
+            inputs = [n['output'] for n in net[i-1]]
+
+        for neuron in layer:
+            for j, inp in enumerate(inputs):
+                neuron['weights'][j] += lr * neuron['delta'] * inp
+            neuron['weights'][-1] += lr * neuron['delta']
+
+def one_hot(label, n_classes):
+    vec = [0]*n_classes
+    vec[label] = 1
+    return vec
+
+def train(epoch, lr, X, y, net, n_classes):
+    data = list(zip(X, y))
+    for ep in range(epoch):
+        shuffle(data)
+        for row, label in data:
+            expected = one_hot(label, n_classes)
+            forward(row, net)
+            backward(expected, net)
+            update(net, row, lr)
+
+def predict(row, net):
+    out = forward(row, net)
+    return np.argmax(out)
+
+def accuracy(X, y, net):
+    correct = 0
+    for i in range(len(X)):
+        if predict(X[i], net) == y[i]:
+            correct += 1
+    return correct / len(X)
+
+# -----------------------------
+# TRAIN
+# -----------------------------
+seed(1)
+
+n_inputs = X_train.shape[1]   # now 30 after PCA
+n_outputs = 10
+
+net = network(n_inputs, [32], n_outputs)
+
+print("Training on Digits dataset with PCA...")
+train(30, 0.1, X_train, y_train, net, n_outputs)
+
+acc = accuracy(X_test, y_test, net)
+print(f"Accuracy: {acc:.3f}")
+```
