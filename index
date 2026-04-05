@@ -21,11 +21,15 @@ prac10 Gaussian and trapezoid fuzzy logic implementation
 prac11 ART 
 
 
-art
+
 ed
-fuzzy
+
+per
+andorxor
+mlp
 kfold
 mlpxor
 pca
-per
 rdf
+fuzzy
+art
