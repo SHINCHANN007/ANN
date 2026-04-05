@@ -1,0 +1,73 @@
+import numpy as np
+import math
+
+# -----------------------------
+# XOR Dataset
+# -----------------------------
+X = np.array([
+    [0,0],
+    [0,1],
+    [1,0],
+    [1,1]
+])
+
+y = np.array([0,1,1,0])
+
+# -----------------------------
+# Gaussian RBF Function
+# -----------------------------
+def rbf(x, c, sigma):
+    dist = np.linalg.norm(x - c)
+    return math.exp(-(dist**2) / (2 * sigma**2))
+
+# -----------------------------
+# Choose Centers (manual)
+# -----------------------------
+centers = np.array([
+    [0,0],
+    [0,1],
+    [1,0],
+    [1,1]
+])
+
+sigma = 1.0
+
+# -----------------------------
+# Build G Matrix
+# -----------------------------
+rows = len(X)
+cols = len(centers)
+
+G = np.zeros((rows, cols))
+
+for i in range(rows):
+    for j in range(cols):
+        G[i][j] = rbf(X[i], centers[j], sigma)
+
+# -----------------------------
+# Find Weights
+# -----------------------------
+W = np.linalg.pinv(G).dot(y)
+
+# -----------------------------
+# Prediction
+# -----------------------------
+pred = G.dot(W)
+
+y_pred = []
+for val in pred:
+    if val >= 0.5:
+        y_pred.append(1)
+    else:
+        y_pred.append(0)
+
+# -----------------------------
+# Output
+# -----------------------------
+print("Predicted:", y_pred)
+print("Actual   :", y)
+
+print("Accuracy : ",np.mean(y_pred == y))
+
+#rbf1
+#rbf2
