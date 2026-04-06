@@ -1,0 +1,223 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+
+# =========================
+# DATA
+# =========================
+X, _ = make_blobs(n_samples=100, centers=3, random_state=42)
+
+# normalize
+X = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0) + 1e-10)
+
+# =========================
+# SOM CLASS
+# =========================
+class SOM:
+    def __init__(self, m, n, dim, lr=0.5, radius=None):
+        self.m = m
+        self.n = n
+        self.dim = dim
+        self.lr = lr
+        self.radius = radius if radius else max(m, n)/2
+
+        # initialize weights
+        self.weights = np.random.rand(m, n, dim)
+
+    # find Best Matching Unit (BMU)
+    def bmu(self, x):
+        dist = np.linalg.norm(self.weights - x, axis=2)
+        return np.unravel_index(np.argmin(dist), (self.m, self.n))
+
+    # train
+    def train(self, data, epochs=100):
+        for ep in range(epochs):
+            for x in data:
+
+                i, j = self.bmu(x)
+
+                # update neighbors
+                for r in range(self.m):
+                    for c in range(self.n):
+
+                        dist = np.sqrt((i-r)**2 + (j-c)**2)
+
+                        if dist <= self.radius:
+                            influence = np.exp(-dist**2 / (2*(self.radius**2)))
+
+                            self.weights[r, c] += self.lr * influence * (x - self.weights[r, c])
+
+            # decay
+            self.lr *= 0.9
+            self.radius *= 0.9
+
+    # assign cluster
+    def predict(self, data):
+        labels = []
+        for x in data:
+            labels.append(self.bmu(x))
+        return labels
+
+
+# =========================
+# TRAIN
+# =========================
+som = SOM(5, 5, 2)   # 5x5 grid, 2D input
+som.train(X, epochs=50)
+
+labels = som.predict(X)
+
+# convert 2D grid → single color index
+labels_flat = [i[0]*5 + i[1] for i in labels]
+
+# =========================
+# PLOT
+# =========================
+plt.scatter(X[:,0], X[:,1], c=labels_flat)
+plt.title("Self Organizing Map (SOM)")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.show()
+```
+
+
+A Self-Organizing Map (SOM) is an unsupervised neural network that groups similar data while also arranging it on a structured grid. In your code, you first generate and normalize the dataset so that all values lie between 0 and 1, which helps stable learning. Then a grid of neurons (for example, 5×5) is initialized, where each neuron has weights of the same dimension as the input data. During training, for every input point, the algorithm finds the Best Matching Unit (BMU)—the neuron whose weights are closest to that input. Instead of updating only that neuron, SOM also updates its neighboring neurons, with closer neighbors changing more than distant ones. This update moves the neurons toward the input data, gradually organizing the grid so that similar inputs activate nearby neurons. Over time, the learning rate and neighborhood radius decrease, allowing the map to stabilize. Finally, each data point is assigned to its BMU, and when plotted, points mapped to similar neurons appear close or share similar colors. In this way, SOM performs both clustering and structure preservation, meaning it not only groups similar data but also keeps their relationships organized spatially.
+
+
+What is SOM (Self-Organizing Map)?
+
+A Self-Organizing Map (SOM) is:
+
+a neural network that clusters data AND arranges it on a grid so similar points stay close.
+
+The intuition (most important part)
+
+Imagine:
+
+You have scattered data points
+You place a grid of neurons on top
+Each neuron moves toward the data
+Nearby neurons move together
+data → pulls neurons → forms organized map
+Final result
+Each neuron represents a region of data
+Similar data → mapped to nearby neurons
+So you get both:
+clustering ✔
+structure ✔
+🔍 What your code is doing (step-by-step)
+
+Now let’s connect this idea directly to your code.
+
+1. Dataset
+X, _ = make_blobs(...)
+
+👉 Creates clustered data (3 groups)
+
+Then:
+
+X = normalize(X)
+
+👉 Scales values between 0–1 (important for learning)
+
+2. SOM initialization
+som = SOM(5, 5, 2)
+
+Meaning:
+
+5 × 5 grid → 25 neurons
+each neuron has 2 weights (because input is 2D)
+
+Inside class:
+
+self.weights = np.random.rand(m, n, dim)
+
+👉 Each neuron starts randomly
+
+3. BMU (Best Matching Unit)
+def bmu(self, x):
+
+This finds:
+
+the neuron whose weights are closest to input
+
+dist = np.linalg.norm(self.weights - x, axis=2)
+
+👉 Distance between input and all neurons
+
+argmin → closest neuron
+4. Training (core of SOM)
+for x in data:
+
+For each input:
+
+Step A: Find BMU
+i, j = self.bmu(x)
+
+👉 “Which neuron best matches this input?”
+
+Step B: Update BMU + neighbors
+for r in range(self.m):
+    for c in range(self.n):
+
+Loop through all neurons
+
+Distance from BMU
+dist = sqrt((i-r)^2 + (j-c)^2)
+
+👉 How far is this neuron from winner?
+
+Influence (very important)
+influence = exp(-dist^2 / (2 * radius^2))
+
+👉 Closer neurons → higher update
+👉 Far neurons → almost no change
+
+Weight update
+self.weights[r,c] += lr * influence * (x - weights)
+
+👉 Moves neuron toward input
+
+5. Decay
+self.lr *= 0.9
+self.radius *= 0.9
+
+👉 Over time:
+
+learning slows down
+neighborhood shrinks
+6. Prediction
+labels.append(self.bmu(x))
+
+👉 Each point gets mapped to a neuron
+
+7. Plot
+plt.scatter(..., c=labels_flat)
+
+👉 Points with same BMU → same color
+
+🎯 What is actually happening (big picture)
+Random grid
+     ↓
+Data pulls neurons
+     ↓
+Grid organizes itself
+     ↓
+Clusters appear
+🧠 Key idea (this is SOM’s identity)
+
+SOM does not just cluster — it preserves topology
+
+Meaning:
+
+similar data → nearby neurons
+structure is maintained
+⚖️ Compare with what you already know
+Model	Behavior
+K-Means	clusters only
+ART	clusters with vigilance
+SOM	clusters + spatial map
+🧠 One-line understanding
+
+SOM = “clustering + visualization in a grid”
