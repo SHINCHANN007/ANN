@@ -141,3 +141,76 @@ train(net, data, lr=0.2, epoch=20, n_outputs=n_outputs)
 print("\nFinal Weights:")
 for layer in net:
     print(layer)
+
+
+
+--
+
+
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+
+# load
+df = sns.load_dataset("iris")
+
+# encode target
+enc = LabelEncoder()
+df['species'] = enc.fit_transform(df['species'])
+
+# split
+X = df.drop('species', axis=1).values
+y = df['species'].values
+
+---------
+from sklearn.datasets import fetch_california_housing
+
+# load
+data = fetch_california_housing()
+
+X = data.data
+y = data.target   # continuous values
+
+# scale
+X = (X - X.mean(axis=0)) / X.std(axis=0)
+
+
+```python id="n4y7k1"
+from sklearn.datasets import load_breast_cancer
+
+# load
+data = load_breast_cancer()
+
+# split
+X = data.data
+y = data.target   # already 0 and 1
+
+# scale (important for MLP)
+X = (X - X.mean(axis=0)) / X.std(axis=0)
+
+
+---------------------
+
+#csv
+```python
+import pandas as pd
+import numpy as np
+
+# load
+df = pd.read_csv("breast-cancer-wisconsin.data.csv")
+
+# clean
+df.drop(columns=df.columns[0], inplace=True)   # remove ID
+df.replace('?', np.nan, inplace=True)
+df.dropna(inplace=True)
+
+# encode target
+df.iloc[:, -1] = df.iloc[:, -1].map({2:0, 4:1})
+
+# split
+X = df.iloc[:, :-1].astype(float).values
+y = df.iloc[:, -1].astype(int).values
+
+# scale (important)
+X = (X - X.mean(axis=0)) / X.std(axis=0)
+```
+
