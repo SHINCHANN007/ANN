@@ -33,6 +33,7 @@ rbf
 pca,pca2
 fuzzy,fuzzy2,fuzzyT
 art,art2
+som
 
 
 consonar #confusion matrix sonar dataset
