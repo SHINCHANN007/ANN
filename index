@@ -25,7 +25,7 @@ prac11 ART
 ed
 
 per
-andorxor
+andorxor , andorxor2
 mlp
 kfold
 mlpxor
@@ -33,3 +33,6 @@ rbf
 pca
 fuzzy
 art
+
+
+consonar #confusion matrix sonar dataset
