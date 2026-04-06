@@ -31,7 +31,7 @@ kfold
 mlpxor, mlpxor2
 rbf
 pca,pca2
-fuzzy,fuzzy2
+fuzzy,fuzzy2,fuzzyT
 art,art2
 
 
