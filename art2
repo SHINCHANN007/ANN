@@ -1,0 +1,295 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_blobs
+
+# =========================
+# DATASET
+# =========================
+X, _ = make_blobs(n_samples=100, centers=3, random_state=42)
+
+# =========================
+# NORMALIZATION
+# =========================
+def normalize(X):
+    return (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0) + 1e-10)
+
+# =========================
+# COMPLEMENT CODING
+# =========================
+def complement_code(X):
+    return np.concatenate([X, 1 - X], axis=1)
+
+# =========================
+# FUZZY ART MODEL
+# =========================
+class FuzzyART:
+    def __init__(self, alpha=0.001, beta=1.0, vigilance=0.7):
+        self.alpha = alpha
+        self.beta = beta
+        self.vigilance = vigilance
+        self.weights = []
+
+    # fuzzy AND (min operator)
+    def fuzzy_and(self, x, w):
+        return np.minimum(x, w)
+
+    # match function
+    def match(self, x, w):
+        return np.sum(self.fuzzy_and(x, w)) / (np.sum(x) + self.alpha)
+
+    # learning rule
+    def learn(self, x, w):
+        return self.beta * self.fuzzy_and(x, w) + (1 - self.beta) * w
+
+    # training
+    def fit(self, X):
+        X = complement_code(normalize(X))
+
+        for x in X:
+            if len(self.weights) == 0:
+                self.weights.append(x.copy())
+                continue
+
+            matched = False
+
+            for i, w in enumerate(self.weights):
+                if self.match(x, w) >= self.vigilance:
+                    self.weights[i] = self.learn(x, w)
+                    matched = True
+                    break
+
+            if not matched:
+                self.weights.append(x.copy())
+
+    # prediction
+    def predict(self, X):
+        X = complement_code(normalize(X))
+        labels = []
+
+        for x in X:
+            label = -1
+            for i, w in enumerate(self.weights):
+                if self.match(x, w) >= self.vigilance:
+                    label = i
+                    break
+            labels.append(label)
+
+        return labels
+
+
+# =========================
+# TRAIN MODEL
+# =========================
+model = FuzzyART(vigilance=0.7)
+model.fit(X)
+
+labels = model.predict(X)
+
+# =========================
+# PLOT
+# =========================
+X_norm = normalize(X)
+
+plt.scatter(X_norm[:, 0], X_norm[:, 1], c=labels)
+plt.title("Fuzzy ART Clustering")
+plt.xlabel("Feature 1")
+plt.ylabel("Feature 2")
+plt.show()
+
+
+
+
+
+
+DETAILED CODE EXPLANATION (SOM USING ART)
+🔹
+1. DATASET
+python
+X, _ = make_blobs(n_samples=100, centers=3, random_state=42)
+👉
+Generates synthetic data (clusters)
+100 data points
+3 clusters
+No labels used
+👉
+Important: ✔ Unsupervised learning
+🔹
+2. NORMALIZATION
+Exported with AI Exporter
+261 / 282
+python
+def normalize(X):
+return (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0) + 1e-10)
+👉
+Scales values between 0 and 1
+👉
+Why needed? ✔ ART requires inputs in range [0,1]
+🔹
+3. COMPLEMENT CODING
+python
+def complement_code(X):
+return np.concatenate([X, 1 - X], axis=1)
+👉
+Doubles input size:
+1
+[x,x] →
+2
+👉
+Purpose: ✔ Prevents category proliferation
+✔ Improves stability
+1
+[x,x,1 −
+2
+1
+x,1−
+x]2
+🔹
+4. FUZZY ART CLASS
+python
+class FuzzyART:
+👉
+This defines the ART model
+🔸
+Parameters
+python
+alpha, beta, vigilance
+Parameter
+alpha
+beta
+Meaning
+choice parameter
+learning rate
+Exported with AI Exporter
+262 / 282
+Parameter
+vigilance
+🔹
+5. FUZZY AND OPERATION
+python
+def fuzzy_and(self, x, w):
+return np.minimum(x, w)
+Meaning
+similarity threshold
+👉
+Performs element-wise minimum
+👉
+Used to measure similarity
+🔹
+6. MATCH FUNCTION
+python
+def match(self, x, w):
+return np.sum(self.fuzzy_and(x, w)) / np.sum(x)
+👉
+Computes similarity ratio
+If value ≥ vigilance: ✔ Accept cluster
+👉
+🔹
+7. LEARNING FUNCTION
+python
+def learn(self, x, w):
+return self.beta * self.fuzzy_and(x, w) + (1 - self.beta) * w
+👉
+Updates weights
+👉
+Moves cluster center closer to input
+🔹
+8. TRAINING (FIT FUNCTION)
+python
+Exported with AI Exporter
+263 / 282
+def fit(self, X):
+Steps:
+1. Normalize data
+2. Apply complement coding
+python
+for x in X:
+👉
+Process each data point
+python
+for i, w in enumerate(self.weights):
+👉
+Compare with existing clusters
+python
+if self.match(x, w) >= self.vigilance:
+👉
+Check similarity
+✔ If satisfied → update cluster
+python
+else:
+self.weights.append(x.copy())
+👉
+If no match: ✔ Create new cluster
+🔹
+9. PREDICTION
+python
+def predict(self, X):
+Exported with AI Exporter
+264 / 282
+�
+�
+Assigns each input to a cluster
+python
+label = i
+👉
+Returns cluster index
+🔹
+10. MODEL EXECUTION
+python
+model = FuzzyART(vigilance=0.7)
+model.fit(X)
+labels = model.predict(X)
+👉
+Train and assign clusters
+🔹
+11. PLOTTING
+python
+plt.scatter(X_norm[:,0], X_norm[:,1], c=labels)
+👉
+Visualizes clusters
+👉
+Different colors = different clusters
+🧠
+COMPLETE WORKING FLOW
+👉
+Generate data
+→ Normalize
+→ Complement coding
+→ Compare with clusters
+→ Check vigilance
+→ Update or create cluster
+→ Assign labels
+→ Plot clusters
+Exported with AI Exporter
+265 / 282
+�
+�
+DETAILED VIVA EXPLANATION SCRIPT
+👉
+Say this confidently 
+�
+�
+👉
+“This program implements clustering using Adaptive Resonance Theory, which behaves like a self
+organizing map.”
+👉
+👉
+👉
+👉
+“First, a synthetic dataset is generated using blobs for clustering.”
+“The data is normalized to bring all values between 0 and 1.”
+“Complement coding is applied to improve stability and avoid excessive cluster formation.”
+“The Fuzzy ART model is initialized with parameters such as vigilance, which controls cluster
+similarity.”
+👉
+👉
+“During training, each input is compared with existing clusters using a match function.”
+“If similarity exceeds the vigilance threshold, the cluster is updated; otherwise, a new cluster is
+created.”
+👉
+👉
+“After training, each data point is assigned to a cluster.”
+“Finally, the clusters are visualized using a scatter plot.”
+🔥
+STRONG CLOSING LINE
+👉
+“ART dynamically forms clusters based on similarity while maintaining stability and adaptability.
