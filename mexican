@@ -1,0 +1,57 @@
+import math
+
+# Mexican Hat Function
+def mexican_hat_mf(x, center, sigma):
+    if sigma == 0:
+        return 1.0 if x == center else 0.0
+    z = (x - center) / sigma
+    return (1 - z**2) * math.exp(-0.5 * z**2)
+
+
+# Input
+T = float(input("Enter Temperature: "))
+P = float(input("Enter Pressure: "))
+
+
+# Fuzzy sets
+temperature_sets = {
+    "L": (10, 15),
+    "A": (50, 10),
+    "H": (90, 15)
+}
+
+pressure_sets = {
+    "L": (1, 0.75),
+    "A": (3, 1),
+    "H": (5, 0.75)
+}
+
+heater_sets = {
+    "L": (1, 0.5),
+    "M": (3, 0.6),
+    "H": (5, 0.7)
+}
+
+valve_sets = {
+    "L": (1, 0.5),
+    "M": (3, 0.6),
+    "H": (5, 0.7)
+}
+
+
+# Simple rule input
+rules = {}
+n = int(input("Number of rules: "))
+
+for i in range(n):
+    t = input("Temp (L/A/H): ").upper()
+    p = input("Pressure (L/A/H): ").upper()
+    h = input("Heater (L/M/H): ").upper()
+    v = input("Valve (L/M/H): ").upper()
+    rules[(t, p)] = (h, v)
+
+
+# Print rules
+print("\nRules:")
+for k in rules:
+    print(k, "->", rules[k])
