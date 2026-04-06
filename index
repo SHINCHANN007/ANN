@@ -26,13 +26,13 @@ ed
 
 per
 andorxor , andorxor2
-mlp , mlpxor2
+mlp 
 kfold
-mlpxor
+mlpxor, mlpxor2
 rbf
-pca
-fuzzy
-art
+pca,pca2
+fuzzy,fuzzy2
+art,art2
 
 
 consonar #confusion matrix sonar dataset
