@@ -1,0 +1,48 @@
+class myFuzzySet:
+
+  def __init__(self,l,c,r):
+    self.l = l #left side
+    self.c = c #center
+    self.r = r #right side
+
+  def membership(self,x):
+    if x <= self.c:
+      return((x - self.l) / (self.c - self.l))
+    elif x <= self.r:
+      return((self.r - x) / (self.r - self.c))
+    else:
+      return 0
+
+#now we make the sets as per the rules of r1 and r2 to input l,c,r values
+
+temperature_below_average = myFuzzySet(15,30,45) #r1
+temperature_low = myFuzzySet(-5,10,25) #r2
+pressure_below_average = myFuzzySet(1.25,2,2.75) #r1
+pressure_low = myFuzzySet(0.25,1,1.75) #r2
+
+heatingpower_medium_high = myFuzzySet(3.25,4,4.75)
+heatingpower_high = myFuzzySet(4.25,5,5.75)
+valveopening_medium_low = myFuzzySet(1.25,2,2.75)
+valveopening_low = myFuzzySet(0.25,1,1.75)
+
+temperature_input = 23.5
+pressure_input = 1.7
+
+m1 = min(temperature_below_average.membership(temperature_input), pressure_below_average.membership(pressure_input))
+m2 = min(temperature_low.membership(temperature_input) , pressure_low.membership(pressure_input))
+print("membership values :")
+print(f"m1 : {m1}")
+print(f"m2 : {m2}")
+
+#defuzzification final crisp output values
+
+c1num = (m1*heatingpower_medium_high.c) + (m2*heatingpower_high.c)
+c1den = m1+m2
+c1val = c1num/c1den
+c2num = (m1*valveopening_medium_low.c) + (m2*valveopening_low.c)
+c2den = m1+m2
+c2val = c2num/c2den
+
+
+print(f"Heating Power Crisp Value : {c1val}")
+print(f"Valve Opening Crisp
